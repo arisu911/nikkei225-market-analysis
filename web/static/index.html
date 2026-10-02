@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nikkei 225 Market Behavior Research | Quantitative Analytics</title>
+  
+  <!-- Modern Typography from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Plotly.js CDN -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- ========================================== -->
+    <!-- Left Sidebar Navigation & Global Controls -->
+    <!-- ========================================== -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <span class="brand-flag">🇯🇵</span>
+          <div class="brand-text">
+            <h2>Nikkei 225 Research</h2>
+            <span class="brand-subtitle">Descriptive & Statistical Behavior</span>
+          </div>
+        </div>
+        <div class="brand-caption">
+          <span class="clock-icon">🕒</span> Display Timezone: <strong>MYT (UTC+8)</strong>
+        </div>
+      </div>
+
+      <!-- Navigation Modules -->
+      <div class="nav-section">
+        <div class="nav-section-title">Research Modules</div>
+        <nav class="nav-menu">
+          <button class="nav-item active" data-module="overview" id="nav-overview">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Market Overview</span>
+          </button>
+          <button class="nav-item" data-module="weekday" id="nav-weekday">
+            <span class="nav-icon">📅</span>
+            <span class="nav-label">Day of Week Analysis</span>
+          </button>
+          <button class="nav-item" data-module="intraday" id="nav-intraday">
+            <span class="nav-icon">⏱️</span>
+            <span class="nav-label">Intraday & Time Profile</span>
+          </button>
+          <button class="nav-item" data-module="gaps" id="nav-gaps">
+            <span class="nav-icon">🌅</span>
+            <span class="nav-label">Opening & Gap Analysis</span>
+          </button>
+          <button class="nav-item" data-module="volatility" id="nav-volatility">
+            <span class="nav-icon">📈</span>
+            <span class="nav-label">Volatility & MFE/MAE</span>
+          </button>
+          <button class="nav-item" data-module="distributions" id="nav-distributions">
+            <span class="nav-icon">🎲</span>
+            <span class="nav-label">Statistical Distributions</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Global Parameters Filter -->
+      <div class="sidebar-filters">
+        <div class="filter-header">
+          <span class="gear-icon">⚙️</span>
+          <span>Global Parameters</span>
+        </div>
+
+        <div class="form-group">
+          <label for="filter-period">Analysis Period</label>
+          <div class="select-wrapper">
+            <select id="filter-period">
+              <option value="1Y">1 Year (1Y)</option>
+              <option value="3Y">3 Years (3Y)</option>
+              <option value="5Y" selected>5 Years (5Y)</option>
+              <option value="10Y">10 Years (10Y)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="filter-weekday">Filter Weekday</label>
+          <div class="select-wrapper">
+            <select id="filter-weekday">
+              <option value="All" selected>All Weekdays</option>
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="filter-resolution">Intraday Resolution</label>
+          <div class="select-wrapper">
+            <select id="filter-resolution">
+              <option value="5m">5 Minutes (5m)</option>
+              <option value="15m" selected>15 Minutes (15m)</option>
+              <option value="30m">30 Minutes (30m)</option>
+              <option value="60m">60 Minutes (60m)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="filter-instrument">Tradable Volume Instrument</label>
+          <div class="select-wrapper">
+            <select id="filter-instrument" disabled>
+              <option value="1321.T" selected>NEXT FUNDS Nikkei 225 ETF (1321.T)</option>
+            </select>
+          </div>
+          <span class="field-hint">Primary TSE ETF Tradable Volume Proxy</span>
+        </div>
+
+        <button id="btn-refresh" class="btn-refresh">
+          <span class="refresh-icon">🔄</span> Force Refresh Data Cache
+        </button>
+      </div>
+
+      <!-- Information Card -->
+      <div class="sidebar-info-card">
+        <div class="info-status">
+          <span class="status-dot"></span>
+          <span class="status-title">TSE Cash Sessions (MYT)</span>
+        </div>
+        <div class="info-details">
+          <div class="info-row"><span>Morning:</span> <strong>08:00 – 10:30</strong></div>
+          <div class="info-row"><span>Lunch:</span> <span class="text-muted">10:30 – 11:30 (Filtered)</span></div>
+          <div class="info-row"><span>Afternoon:</span> <strong>11:30 – 14:30</strong></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ========================================== -->
+    <!-- Main Content Area                          -->
+    <!-- ========================================== -->
+    <main class="main-content">
+      
+      <!-- Top Status Row Badges -->
+      <div class="top-status-row">
+        <div class="status-badge badge-primary">
+          <span class="badge-dot"></span>
+          <span class="badge-label">Coverage:</span>
+          <strong id="badge-coverage">Loading...</strong>
+        </div>
+        <div class="status-badge badge-info">
+          <span class="badge-label">Timezone:</span>
+          <strong id="badge-timezone">MYT (UTC+8)</strong>
+        </div>
+        <div class="status-badge badge-neutral">
+          <span class="badge-label">Sessions:</span>
+          <strong id="badge-sessions">---</strong>
+        </div>
+        <div class="status-badge badge-secondary">
+          <span class="badge-label">Resolution:</span>
+          <strong id="badge-resolution">15m</strong>
+        </div>
+        <div class="status-badge badge-accent">
+          <span class="badge-label">Volume Proxy:</span>
+          <strong id="badge-volume">1321.T ETF</strong>
+        </div>
+      </div>
+
+      <!-- Dynamic Header -->
+      <header class="module-header">
+        <h1 id="module-title">Market Overview</h1>
+        <p id="module-description">Descriptive statistical summary of the Nikkei 225 index and TSE market behavior. All timestamps displayed in MYT (UTC+8).</p>
+      </header>
+
+      <!-- KPI Summary Cards Grid -->
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Avg Daily Return</div>
+          <div class="kpi-value" id="kpi-avg-return">--</div>
+          <div class="kpi-subtext">Open to Close Return</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Median Return</div>
+          <div class="kpi-value" id="kpi-median-return">--</div>
+          <div class="kpi-subtext">Session Median</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Daily Volatility (Std)</div>
+          <div class="kpi-value" id="kpi-volatility">--</div>
+          <div class="kpi-subtext" id="kpi-ann-vol">Ann: --</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Avg Daily Range</div>
+          <div class="kpi-value" id="kpi-daily-range">--</div>
+          <div class="kpi-subtext">(High - Low) / Open</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Positive Days (%)</div>
+          <div class="kpi-value text-green" id="kpi-positive-days">--</div>
+          <div class="kpi-subtext" id="kpi-negative-days">Neg: --</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Total Sessions (n)</div>
+          <div class="kpi-value text-blue" id="kpi-total-sessions">--</div>
+          <div class="kpi-subtext" id="kpi-active-period">Period: 5Y</div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- Modular View Panels                        -->
+      <!-- ========================================== -->
+
+      <!-- 1. Market Overview Panel -->
+      <div id="view-overview" class="view-panel active">
+        <div class="panel-card chart-card">
+          <div class="card-header">
+            <h3>📈 Cumulative Session Return Path</h3>
+            <span class="card-tag">Normalized Compounded Return</span>
+          </div>
+          <div id="chart-cumulative" class="chart-container"></div>
+        </div>
+
+        <div class="grid-2-cols">
+          <div class="panel-card table-card">
+            <div class="card-header">
+              <h3>📆 Yearly Performance Summary</h3>
+              <span class="card-tag">Multi-Year Breakdown</span>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="table-yearly">
+                <thead>
+                  <tr>
+                    <th>Year</th>
+                    <th>Annual Return</th>
+                    <th>Avg Daily Ret</th>
+                    <th>Daily Vol</th>
+                    <th>Ann Vol</th>
+                    <th>Max Drawdown</th>
+                    <th>Sessions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="7" class="loading-td">Loading yearly statistics...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel-card table-card">
+            <div class="card-header">
+              <h3>🗓️ Monthly Seasonality (Jan–Dec)</h3>
+              <span class="card-tag">Aggregate Behavior</span>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="table-monthly">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Avg Return</th>
+                    <th>Median Ret</th>
+                    <th>Volatility</th>
+                    <th>Avg Range</th>
+                    <th>Positive Days</th>
+                    <th>Sessions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="7" class="loading-td">Loading monthly seasonality...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Day of Week Panel -->
+      <div id="view-weekday" class="view-panel">
+        <div class="panel-card chart-card">
+          <div class="card-header">
+            <h3>📊 Monday – Friday KPI Comparisons</h3>
+            <span class="card-tag">Return, Range, and Win Rate</span>
+          </div>
+          <div id="chart-weekday-comp" class="chart-container"></div>
+        </div>
+
+        <div class="panel-card table-card">
+          <div class="card-header">
+            <h3>📋 Weekday Statistical Summary Table</h3>
+            <span class="card-tag">Detailed Distribution Breakdown</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="table-weekday">
+              <thead>
+                <tr>
+                  <th>Day</th>
+                  <th>Sample (n)</th>
+                  <th>Avg Ret</th>
+                  <th>Median Ret</th>
+                  <th>Avg Abs Move</th>
+                  <th>Avg Range</th>
+                  <th>Max Ret</th>
+                  <th>Min Ret</th>
+                  <th>Pos Days</th>
+                  <th>Std Dev</th>
+                  <th>P25</th>
+                  <th>P75</th>
+                  <th>P90</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="13" class="loading-td">Loading weekday statistics...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid-2-cols">
+          <div class="panel-card chart-card">
+            <div class="card-header">
+              <h3>📦 Return Distribution by Weekday (Box Plots)</h3>
+              <span class="card-tag">Dispersion & Outliers</span>
+            </div>
+            <div id="chart-weekday-box" class="chart-container"></div>
+          </div>
+
+          <div class="panel-card chart-card">
+            <div class="card-header">
+              <h3>🗺️ Weekday × Time Slot Heatmap</h3>
+              <span class="card-tag">Intraday Matrix (MYT)</span>
+            </div>
+            <div id="chart-weekday-heatmap" class="chart-container"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Intraday & Time Profile Panel -->
+      <div id="view-intraday" class="view-panel">
+        <div class="panel-card chart-card">
+          <div class="card-header">
+            <h3>⏱️ TSE Intraday Time-of-Day Profile</h3>
+            <span class="card-tag">4 Subplots: Return, Volatility, Range, Frequency</span>
+          </div>
+          <div id="chart-intraday-profile" class="chart-container-large"></div>
+        </div>
+
+        <div class="panel-card table-card">
+          <div class="card-header">
+            <h3>🕒 Standard Intraday Time Windows Analysis (MYT)</h3>
+            <span class="card-tag">Institutional Windows Breakdown</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="table-time-windows">
+              <thead>
+                <tr>
+                  <th>Time Window (MYT)</th>
+                  <th>Segment Description</th>
+                  <th>Sample (n)</th>
+                  <th>Avg Return</th>
+                  <th>Median Return</th>
+                  <th>Avg Abs Move</th>
+                  <th>Volatility</th>
+                  <th>Avg Range</th>
+                  <th>Positive Sessions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="9" class="loading-td">Loading intraday time windows...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Opening & Gap Analysis Panel -->
+      <div id="view-gaps" class="view-panel">
+        <!-- Gap KPI mini-grid -->
+        <div class="mini-kpi-grid">
+          <div class="mini-kpi-card">
+            <span class="mini-label">Avg Opening Gap</span>
+            <strong class="mini-value" id="gap-kpi-avg">--</strong>
+          </div>
+          <div class="mini-kpi-card">
+            <span class="mini-label">Median Gap</span>
+            <strong class="mini-value" id="gap-kpi-med">--</strong>
+          </div>
+          <div class="mini-kpi-card">
+            <span class="mini-label">Avg Absolute Gap</span>
+            <strong class="mini-value" id="gap-kpi-abs">--</strong>
+          </div>
+          <div class="mini-kpi-card">
+            <span class="mini-label">Gap Up Frequency</span>
+            <strong class="mini-value text-green" id="gap-kpi-up">--</strong>
+          </div>
+          <div class="mini-kpi-card">
+            <span class="mini-label">Overall Fill Rate</span>
+            <strong class="mini-value text-cyan" id="gap-kpi-fill">--</strong>
+          </div>
+          <div class="mini-kpi-card">
+            <span class="mini-label">Total Gaps Analyzed</span>
+            <strong class="mini-value text-blue" id="gap-kpi-total">--</strong>
+          </div>
+        </div>
+
+        <div class="grid-2-cols">
+          <div class="panel-card chart-card">
+            <div class="card-header">
+              <h3>🚀 Opening Gap Percentage Distribution</h3>
+              <span class="card-tag">% from Prev Close</span>
+            </div>
+            <div id="chart-gap-dist" class="chart-container"></div>
+          </div>
+
+          <div class="panel-card chart-card">
+            <div class="card-header">
+              <h3>🎯 TSE Opening Gap Fill Frequency</h3>
+              <span class="card-tag">Overall vs Directional</span>
+            </div>
+            <div id="chart-gap-fill" class="chart-container"></div>
+          </div>
+        </div>
+
+        <div class="panel-card chart-card" id="card-time-to-fill">
+          <div class="card-header">
+            <h3>⏱️ Time-to-Fill Distribution</h3>
+            <span class="card-tag">Minutes from 08:00 MYT Open</span>
+          </div>
+          <div id="chart-time-to-fill" class="chart-container"></div>
+        </div>
+
+        <div class="panel-card table-card">
+          <div class="card-header">
+            <h3>📊 Opening Window Performance & Range Expansion</h3>
+            <span class="card-tag">5m, 15m, 30m, 60m Ranges</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="table-opening-ranges">
+              <thead>
+                <tr>
+                  <th>Opening Window</th>
+                  <th>Sample (n)</th>
+                  <th>Avg Return</th>
+                  <th>Median Ret</th>
+                  <th>Volatility</th>
+                  <th>Avg Range</th>
+                  <th>Avg % of Full-Day Range</th>
+                  <th>Positive Window %</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="8" class="loading-td">Loading opening range expansion data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel-card chart-card" id="card-opening-range-ratio">
+          <div class="card-header">
+            <h3>📈 Opening Range vs Full-Day Range Expansion Ratio (%)</h3>
+            <span class="card-tag">Boxplot Distributions</span>
+          </div>
+          <div id="chart-opening-range-ratio" class="chart-container"></div>
+        </div>
+      </div>
+
+      <!-- 5. Volatility & MFE/MAE Panel -->
+      <div id="view-volatility" class="view-panel">
+        <div class="panel-card chart-card">
+          <div class="card-header">
+            <h3>🌊 Multi-Window Rolling Historical Volatility</h3>
+            <span class="card-tag">20d, 60d, 120d Annualized</span>
+          </div>
+          <div id="chart-rolling-vol" class="chart-container"></div>
+        </div>
+
+        <div class="panel-card table-card">
+          <div class="card-header">
+            <h3>📋 Return and Range Volatility Quantile Profile</h3>
+            <span class="card-tag">Parametric & Non-Parametric Metrics</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="table-volatility-quantiles">
+              <thead>
+                <tr>
+                  <th>Metric Label</th>
+                  <th>Count</th>
+                  <th>Mean</th>
+                  <th>Median</th>
+                  <th>Std Dev</th>
+                  <th>Min</th>
+                  <th>Max</th>
+                  <th>Skewness</th>
+                  <th>Kurtosis</th>
+                  <th>P10</th>
+                  <th>P25</th>
+                  <th>P50</th>
+                  <th>P75</th>
+                  <th>P90</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="14" class="loading-td">Loading quantile profile...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid-2-cols">
+          <div class="panel-card table-card">
+            <div class="card-header">
+              <h3>⚖️ Morning vs Afternoon Session Comparison</h3>
+              <span class="card-tag">08:00–10:30 vs 11:30–14:30 MYT</span>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="table-morning-afternoon">
+                <thead>
+                  <tr>
+                    <th>Session</th>
+                    <th>Hours</th>
+                    <th>Sessions</th>
+                    <th>Avg Ret</th>
+                    <th>Median Ret</th>
+                    <th>Vol</th>
+                    <th>Avg Range</th>
+                    <th>Pos %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="8" class="loading-td">Loading session comparisons...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel-card chart-card">
+            <div class="card-header">
+              <h3>⚖️ Morning vs Afternoon Distribution Boxplots</h3>
+              <span class="card-tag">Return & Range Dynamics</span>
+            </div>
+            <div id="chart-morning-afternoon" class="chart-container"></div>
+          </div>
+        </div>
+
+        <div class="panel-card chart-card">
+          <div class="card-header">
+            <h3>🎯 Daily Intraday Path: MFE vs MAE from 08:00 MYT Open</h3>
+            <span class="card-tag">Excursion Scatter (Color = Final Return %)</span>
+          </div>
+          <div id="chart-mfe-mae" class="chart-container"></div>
+        </div>
+
+        <div class="grid-2-cols">
+          <div class="panel-card chart-card">
+            <div class="card-header">
+              <h3>🎯 Maximum Favorable Excursion (MFE) Distribution</h3>
+              <span class="card-tag">Max Upward % from Open</span>
+            </div>
+            <div id="chart-mfe-hist" class="chart-container"></div>
+          </div>
+
+          <div class="panel-card chart-card">
+            <div class="card-header">
+              <h3>🛡️ Maximum Adverse Excursion (MAE) Distribution</h3>
+              <span class="card-tag">Max Downward % from Open</span>
+            </div>
+            <div id="chart-mae-hist" class="chart-container"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. Statistical Distributions Panel -->
+      <div id="view-distributions" class="view-panel">
+        <div class="panel-card table-card">
+          <div class="card-header">
+            <h3>📋 Full Empirical Quantile Breakdown</h3>
+            <span class="card-tag">Session Return, Absolute Move, and High-Low Range</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="table-distributions-quantiles">
+              <thead>
+                <tr>
+                  <th>Series</th>
+                  <th>Count</th>
+                  <th>Mean</th>
+                  <th>Median</th>
+                  <th>Std Dev</th>
+                  <th>Min</th>
+                  <th>Max</th>
+                  <th>Skewness</th>
+                  <th>Kurtosis</th>
+                  <th>P10</th>
+                  <th>P25</th>
+                  <th>P50</th>
+                  <th>P75</th>
+                  <th>P90</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="14" class="loading-td">Loading distributions quantiles...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel-card table-card">
+          <div class="card-header">
+            <h3>🎲 Historical Movement Frequency Tables</h3>
+            <span class="card-tag">Empirical Sample Probabilities</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="table-movement-frequencies">
+              <thead>
+                <tr>
+                  <th>Move Category / Threshold</th>
+                  <th>Historical Frequency (%)</th>
+                  <th>Occurrences (Count)</th>
+                  <th>Sample Size (n)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="4" class="loading-td">Loading movement frequencies...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid-2-cols">
+          <div class="panel-card chart-card">
+            <div class="card-header">
+              <h3>📊 Session Return Distribution (%)</h3>
+              <span class="card-tag">Histogram with Mean & Median</span>
+            </div>
+            <div id="chart-return-hist" class="chart-container"></div>
+          </div>
+
+          <div class="panel-card chart-card">
+            <div class="card-header">
+              <h3>📊 Daily High-Low Range Distribution (%)</h3>
+              <span class="card-tag">Dispersion & Volatility</span>
+            </div>
+            <div id="chart-range-hist" class="chart-container"></div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Application Controller Script -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
