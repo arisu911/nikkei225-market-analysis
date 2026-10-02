@@ -43,42 +43,42 @@ All displayed timestamps and market sessions are converted to **Malaysia Time (M
 
 ### Return Metrics
 * **Session Simple Return ($R_t$):**
-  $$R_t = \frac{Close_{14:30} - Open_{08:00}}{Open_{08:00}} \times 100\%$$
+  $$R_t = \frac{\text{Close}_{\text{14:30 MYT}} - \text{Open}_{\text{08:00 MYT}}}{\text{Open}_{\text{08:00 MYT}}} \times 100\%$$
 * **Bar Return ($r_i$):**
-  $$r_i = \frac{Close_i - Open_i}{Open_i} \times 100\%$$
+  $$r_i = \frac{\text{Close}_i - \text{Open}_i}{\text{Open}_i} \times 100\%$$
 * **Absolute Return:**
   $$|R_{\%}| = |R_t|$$
 
 ### High-Low Range
 * **Absolute Range:**
-  $$Range = High - Low$$
+  $$\text{Range} = \text{High} - \text{Low}$$
 * **Normalized Range (% of Open):**
-  $$Range_{\%} = \frac{High - Low}{Open} \times 100\%$$
+  $$\text{Range}_{\%} = \frac{\text{High} - \text{Low}}{\text{Open}} \times 100\%$$
 
 ### Volatility Measures
 * **Sample Standard Deviation ($\sigma$):**
   $$\sigma = \sqrt{\frac{1}{N-1}\sum_{i=1}^N (R_i - \bar{R})^2}$$
-* **Annualized Volatility ($\sigma_{annual}$):**
-  $$\sigma_{annual} = \sigma_{daily} \times \sqrt{250}$$
+* **Annualized Volatility ($\sigma_{\text{annual}}$):**
+  $$\sigma_{\text{annual}} = \sigma_{\text{daily}} \times \sqrt{250}$$
 * **Rolling Volatility:** Rolling sample standard deviation computed over $k \in \{20, 60, 120\}$ trading sessions.
 
 ### Opening Gaps & Gap-Fill
 * **Opening Gap %:**
-  $$Gap_{\%} = \frac{Open_{08:00\ MYT} - Close_{prev}}{Close_{prev}} \times 100\%$$
+  $$\text{Gap}_{\%} = \frac{\text{Open}_{\text{08:00 MYT}} - \text{Close}_{\text{prev}}}{\text{Close}_{\text{prev}}} \times 100\%$$
 * **Gap-Fill Condition:**
-  * **Gap Up ($Open > Close_{prev}$):** Filled if intraday $Low \le Close_{prev}$.
-  * **Gap Down ($Open < Close_{prev}$):** Filled if intraday $High \ge Close_{prev}$.
-* **Time-to-Fill:** Elapsed minutes from 08:00 MYT until the first bar touching $Close_{prev}$.
+  * **Gap Up ($\text{Open} > \text{Close}_{\text{prev}}$):** Filled if intraday $\text{Low} \le \text{Close}_{\text{prev}}$.
+  * **Gap Down ($\text{Open} < \text{Close}_{\text{prev}}$):** Filled if intraday $\text{High} \ge \text{Close}_{\text{prev}}$.
+* **Time-to-Fill:** Elapsed minutes from 08:00 MYT until the first bar touching $\text{Close}_{\text{prev}}$.
 
 ### Maximum Excursions (MFE / MAE)
 * **Maximum Favorable Excursion (MFE):**
-  $$MFE_{\%} = \frac{High_{session} - Open_{08:00}}{Open_{08:00}} \times 100\%$$
+  $$\text{MFE}_{\%} = \frac{\text{High}_{\text{session}} - \text{Open}_{\text{08:00 MYT}}}{\text{Open}_{\text{08:00 MYT}}} \times 100\%$$
 * **Maximum Adverse Excursion (MAE):**
-  $$MAE_{\%} = \frac{Low_{session} - Open_{08:00}}{Open_{08:00}} \times 100\%$$
+  $$\text{MAE}_{\%} = \frac{\text{Low}_{\text{session}} - \text{Open}_{\text{08:00 MYT}}}{\text{Open}_{\text{08:00 MYT}}} \times 100\%$$
 
 ### Relative Volume (RVOL)
 * **Relative Volume for Intraday Slot $t$:**
-  $$RVOL_{d, t} = \frac{Volume_{d, t}}{\overline{V}_t}$$
+  $$RVOL_{d, t} = \frac{\text{Volume}_{d, t}}{\overline{V}_t}$$
   where $\overline{V}_t$ is the historical average volume for that specific time bucket across the analyzed period.
 
 ---
@@ -109,37 +109,36 @@ All displayed timestamps and market sessions are converted to **Malaysia Time (M
 ```text
 nikkei225_market_analysis/
 │
-├── app.py                     # Main Streamlit application entrypoint & routing
-├── requirements.txt           # Dependency specifications
-├── README.md                  # Project documentation & formulas
-├── .gitignore                 # Git ignore rules
+├── main.py                    # Asynchronous FastAPI application entrypoint & REST API routes
+├── requirements.txt           # Pinned production dependency definitions
+├── README.md                  # Project documentation & mathematical formulas
+├── .gitignore                 # Production Git ignore rules
 │
 ├── config/
-│   ├── __init__.py
-│   └── settings.py            # Timezones, TSE session hours, time buckets, symbols
+│   ├── __init__.py            # Config package marker
+│   └── settings.py            # Timezones, TSE session hours (MYT UTC+8), thresholds, symbols
 │
 ├── data/
-│   ├── raw/                   # Raw historical downloads and custom offline files
-│   ├── processed/             # Cleaned and processed parquet files
-│   └── cache/                 # Local disk cache for fast reloading
+│   ├── raw/                   # Raw historical downloads and custom offline datasets
+│   ├── processed/             # Sanitized and structured session datasets
+│   └── cache/                 # Local disk Parquet cache for high-speed retrieval
 │
-├── src/
-│   ├── __init__.py
-│   ├── timezone_utils.py      # JST -> MYT timezone-aware conversions
+├── engine/
+│   ├── __init__.py            # Analytical engine exports
+│   ├── calculations.py        # Returns, high-low ranges, gaps, MFE/MAE excursions
+│   ├── charts.py              # Interactive dark-themed Plotly figure factory
+│   ├── data_cleaner.py        # Anomaly checks, duplicate filtration, diagnostic reporting
+│   ├── data_loader.py         # YFinance data provider with Parquet caching & coverage metrics
 │   ├── market_sessions.py     # TSE session filtering (08:00–10:30, 11:30–14:30) & lunch exclusion
-│   ├── data_loader.py         # YFinance data provider abstraction with Parquet caching & coverage reporting
-│   ├── data_cleaner.py        # Anomaly checks, duplicate removal, diagnostic reports
-│   ├── calculations.py        # Returns, RV, gaps, MFE/MAE, opening ranges
-│   ├── statistics.py          # Weekday, distribution quantiles, probability frequencies
-│   ├── charts.py              # Interactive dark-themed Plotly charts
-│   └── views/                 # Single-page UI view modules
-│       ├── __init__.py
-│       ├── overview.py        # Overview KPI cards, data coverage, yearly/monthly seasonality
-│       ├── weekday_analysis.py# Monday-Friday statistical breakdown & heatmap
-│       ├── intraday_analysis.py# Time-of-day profile, standard buckets & custom inspector
-│       ├── opening_analysis.py# Opening gaps, gap-fill rates, 5m/15m/30m/60m ranges
-│       ├── volatility_analysis.py# Rolling volatility, Morning vs Afternoon, MFE/MAE
-│       └── distributions.py   # Quantile profiles & historical movement frequencies
+│   ├── statistics.py          # Empirical quantiles (P10–P90), higher moments, movement frequencies
+│   └── timezone_utils.py      # Timezone-aware conversions (JST UTC+9 to MYT UTC+8)
+│
+├── static/
+│   ├── index.html             # Single-Page Application container (6 research modules, 6 KPI cards)
+│   ├── css/
+│   │   └── dashboard.css      # Institutional dark theme styling (#0e1117 palette) & responsive grid
+│   └── js/
+│       └── app.js             # Client state store, async fetch pipeline & Plotly.react() controller
 │
 └── tests/
     ├── __init__.py
@@ -155,7 +154,6 @@ nikkei225_market_analysis/
 
 ### 1. Install Dependencies
 ```bash
-cd nikkei225_market_analysis
 pip install -r requirements.txt
 ```
 
@@ -164,11 +162,19 @@ pip install -r requirements.txt
 pytest tests/ -v
 ```
 
-### 3. Launch the Streamlit Dashboard
+### 3. Launch the FastAPI Application Server
 ```bash
-streamlit run app.py
+py -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 ```
-or via python module:
+
+*Note: If port 8000 is occupied by another service on your system, launch on port 8001:*
 ```bash
-python -m streamlit run app.py
+py -m uvicorn main:app --host 127.0.0.1 --port 8001 --reload
 ```
+
+### 4. Access the Research Dashboard
+Open your web browser and navigate to:
+```
+http://127.0.0.1:8000
+```
+*(or `http://127.0.0.1:8001` if running on port 8001)*
