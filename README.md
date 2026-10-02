@@ -39,48 +39,106 @@ All displayed timestamps and market sessions are converted to **Malaysia Time (M
 
 ---
 
-### 3. Quantitative Mathematical Formulas
+## 3. Quantitative Mathematical Formulas
 
-#### Return Metrics
+### Return Metrics
+
 * **Session Simple Return ($R_t$):**
-  $$R_t = \frac{\text{Close}_{\text{14:30 MYT}} - \text{Open}_{\text{08:00 MYT}}}{\text{Open}_{\text{08:00 MYT}}} \times 100\%$$
+
+  $$
+  R_t = \frac{\text{Close}_{\text{14:30 MYT}} - \text{Open}_{\text{08:00 MYT}}}{\text{Open}_{\text{08:00 MYT}}} \times 100\%
+  $$
+
 * **Bar Return ($r_i$):**
-  $$r_i = \frac{\text{Close}_i - \text{Open}_i}{\text{Open}_i} \times 100\%$$
+
+  $$
+  r_i = \frac{\text{Close}_i - \text{Open}_i}{\text{Open}_i} \times 100\%
+  $$
+
 * **Absolute Return ($|R_t|$):**
-  $$|R_{\text{abs}}| = |R_t|$$
 
-#### High-Low Range
+  $$
+  |R_{\text{abs}}| = |R_t|
+  $$
+
+---
+
+### High-Low Range
+
 * **Absolute Range:**
-  $$\text{Range}_{\text{abs}} = \text{High} - \text{Low}$$
+
+  $$
+  \text{Range}_{\text{abs}} = \text{High} - \text{Low}
+  $$
+
 * **Normalized Range (% of Open):**
-  $$\text{Range}_{\%} = \frac{\text{High} - \text{Low}}{\text{Open}} \times 100\%$$
 
-#### Volatility Measures
+  $$
+  \text{Range}_{\%} = \frac{\text{High} - \text{Low}}{\text{Open}} \times 100\%
+  $$
+
+---
+
+### Volatility Measures
+
 * **Sample Standard Deviation ($\sigma$):**
-  $$\sigma = \sqrt{\frac{1}{N - 1} \sum_{i=1}^{N} (R_i - \bar{R})^2}$$
-* **Annualized Volatility ($\sigma_{\text{annual}}$):**
-  $$\sigma_{\text{annual}} = \sigma_{\text{daily}} \times \sqrt{250}$$
-* **Rolling Volatility:** Rolling sample standard deviation computed over $k \in \{20, 60, 120\}$ trading sessions.
 
-#### Opening Gaps & Gap-Fill
+  $$
+  \sigma = \sqrt{\frac{1}{N - 1} \sum_{i=1}^{N} (R_i - \bar{R})^2}
+  $$
+
+* **Annualized Volatility ($\sigma_{\text{annual}}$):**
+
+  $$
+  \sigma_{\text{annual}} = \sigma_{\text{daily}} \times \sqrt{250}
+  $$
+
+* **Rolling Volatility:**
+  Rolling sample standard deviation computed over $k \in \{20, 60, 120\}$ trading sessions.
+
+---
+
+### Opening Gaps & Gap-Fill
+
 * **Opening Gap %:**
-  $$\text{Gap}_{\%} = \frac{\text{Open}_{\text{08:00 MYT}} - \text{Close}_{\text{prev}}}{\text{Close}_{\text{prev}}} \times 100\%$$
+
+  $$
+  \text{Gap}_{\%} = \frac{\text{Open}_{\text{08:00 MYT}} - \text{Close}_{\text{prev}}}{\text{Close}_{\text{prev}}} \times 100\%
+  $$
+
 * **Gap-Fill Condition:**
   * **Gap Up ($\text{Open} > \text{Close}_{\text{prev}}$):** Filled if intraday $\text{Low} \le \text{Close}_{\text{prev}}$.
   * **Gap Down ($\text{Open} < \text{Close}_{\text{prev}}$):** Filled if intraday $\text{High} \ge \text{Close}_{\text{prev}}$.
-* **Time-to-Fill:** Elapsed minutes from 08:00 MYT until the first bar touching $\text{Close}_{\text{prev}}$.
+* **Time-to-Fill:**
+  Elapsed minutes from 08:00 MYT until the first bar touching $\text{Close}_{\text{prev}}$.
 
-#### Maximum Excursions (MFE / MAE)
-* **Maximum Favorable Excursion (MFE):**
-  $$\text{MFE}_{\%} = \frac{\text{High}_{\text{session}} - \text{Open}_{\text{08:00 MYT}}}{\text{Open}_{\text{08:00 MYT}}} \times 100\%$$
-* **Maximum Adverse Excursion (MAE):**
-  $$\text{MAE}_{\%} = \frac{\text{Low}_{\text{session}} - \text{Open}_{\text{08:00 MYT}}}{\text{Open}_{\text{08:00 MYT}}} \times 100\%$$
-
-#### Relative Volume (RVOL)
-* **Relative Volume for Intraday Slot $t$:**
-  $$\text{RVOL}_{d,t} = \frac{\text{Volume}_{d,t}}{\bar{V}_t}$$
-  where $\bar{V}_t$ is the historical average volume for that specific time bucket across the analyzed period.
 ---
+
+### Maximum Excursions (MFE / MAE)
+
+* **Maximum Favorable Excursion (MFE):**
+
+  $$
+  \text{MFE}_{\%} = \frac{\text{High}_{\text{session}} - \text{Open}_{\text{08:00 MYT}}}{\text{Open}_{\text{08:00 MYT}}} \times 100\%
+  $$
+
+* **Maximum Adverse Excursion (MAE):**
+
+  $$
+  \text{MAE}_{\%} = \frac{\text{Low}_{\text{session}} - \text{Open}_{\text{08:00 MYT}}}{\text{Open}_{\text{08:00 MYT}}} \times 100\%
+  $$
+
+---
+
+### Relative Volume (RVOL)
+
+* **Relative Volume for Intraday Slot $t$:**
+
+  $$
+  \text{RVOL}_{d,t} = \frac{\text{Volume}_{d,t}}{\bar{V}_t}
+  $$
+
+  where $\bar{V}_t$ is the historical average volume for that specific time bucket across the analyzed period.
 
 ## 📈 4. Volume Separation & Instruments
 
